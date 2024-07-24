@@ -12,7 +12,6 @@ int main()
 		if(s == "#")
 			break;
 
-		char c = s[0];
 		int answer = -1;
 		for(char c : s)
 			if(c == s[0] || c == (s[0]^32))
