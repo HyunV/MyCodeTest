@@ -5,19 +5,12 @@ using namespace std;
 
 int main()
 {
-	string s;
+	string s = "CAMBRIDGE";
 
 	set<char> sets;
 
-	sets.insert('C');
-	sets.insert('A');
-	sets.insert('M');
-	sets.insert('B');
-	sets.insert('R');
-	sets.insert('I');
-	sets.insert('D');
-	sets.insert('G');
-	sets.insert('E');
+	for (char c : s)
+		sets.insert(c);
 
 	cin >> s;
 
