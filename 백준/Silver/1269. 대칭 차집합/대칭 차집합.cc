@@ -1,30 +1,33 @@
 #include <iostream>
-#include <unordered_set>
+#include <unordered_map>
 using namespace std;
 
 int main()
 {
 	int n, m;
 
-	unordered_set<int> uSet;
+	unordered_map<int, bool> uMap;
 
 	cin >> n >> m;
 	int num;
 	while (n--)
 	{
 		cin >> num;
-		uSet.insert(num);
+		uMap.insert({ num, false });
 	}
 
-	int cnt = 0;
 	while (m--)
 	{
 		cin >> num;
-		if (uSet.find(num) != uSet.end())
-			cnt++;
-		else
-			uSet.insert(num);
+		if (uMap.insert({ num, false }).second == false)
+			uMap[num] = true;
 	}
 
-	cout << uSet.size() - cnt;
+	int answer = 0;
+	for (auto& m : uMap)
+	{
+		if(m.second == false)
+			answer++;
+	}
+	cout << answer;
 }
