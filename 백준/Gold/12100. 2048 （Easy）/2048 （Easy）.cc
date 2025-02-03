@@ -1,83 +1,42 @@
 #include <iostream>
-#include <vector>
 #include <utility>
 #include <math.h>
 
 #define MAX_MOVE 5
-
+#define MAX_SIZE 20
 using namespace std;
 
-enum class EMOVE {
-	UP,
-	DOWN,
-	LEFT,
-	RIGHT
-};
-
-//상, 하, 좌, 우
 const pair<int, int> dir[4] = { {-1, 0}, {1, 0}, {0, -1},{0, 1} };
 
 //중복순열용
-vector<int> input;
+int input[MAX_MOVE];
 
-vector<vector<int>> arr; //보드 벡터
+int g_arr[MAX_SIZE][MAX_SIZE]; //보드 벡터
 int arrSize = 0;
 
+int curMaxBlock = 0;
 int maxBlock = 0; //정답
 
-//##############테스트#######################
-const string moveStr[4] = { "상","하","좌","우" };
-void print(const vector<vector<int>>& arr)
-{
-	for (auto& i : arr)
-	{
-		for (auto& j : i)
-			cout << j << "	";
-
-		cout << '\n';
-	}
-		
-	cout << '\n';	
-}
-//##########################
-
-void movePiece(vector<vector<int>>& arr, int moveIdx)
+bool movePiece(int arr[][MAX_SIZE], int moveIdx, int cnt)
 {
 	int row = 0, col = 0;
-	
-	vector<vector<bool>> isMerged(arrSize, vector<bool>(arrSize));
+	bool isMove = false;
+	bool isMerged[MAX_SIZE * MAX_SIZE] = { false };
 
 	for (int i = 0; i < arrSize; i++)
 	{
 		for (int j = 0; j < arrSize; j++)
-		{			
-			switch ((EMOVE)moveIdx)
+		{
+			switch (moveIdx)
 			{
-			//[상] -> 좌상단 시작 -> 좌하단으로 이동
-			case EMOVE::UP: //[1,2,3,4] [5,6,7,8] [9,10,11,12] [13,14,15,16]
-				row = i;
-				col = j;
-				break;
-			//[하] -> 좌하단 시작 -> 우상단으로 이동
-			case EMOVE::DOWN: //[13,14,15,16] [9,10,11,12] [5,6,7,8] [1,2,3,4]
-				row = arrSize - 1 - i;
-				col = j;
-				break;
-			//[좌] -> 좌상단 시작 -> 우하단으로 이동
-			case EMOVE::LEFT: //[1,5,9,13] [2,6,10,14] [3,7,11,15] [4,8,12,16]
-				row = j;
-				col = i;
-				break;
-			
-			//[우] -> 우상단 시작 -> 좌하단으로 이동
-			case EMOVE::RIGHT: //[4,8,12,16] [3,7,11,15] [2,6,10,14] [1,5,9,13]
-				row = j;
-				col = arrSize -1 - i;				
-				break;			
+			case 0: row = i; col = j; break;
+			case 1: row = arrSize - 1 - i;  col = j; break;
+			case 2: row = j; col = i; break;
+			case 3: row = j; col = arrSize - 1 - i; break;
 			}
 
 			//퍼즐 당기기
-			while (1)
+			while (true)
 			{
 				int nxtI = row + dir[moveIdx].first;
 				int nxtJ = col + dir[moveIdx].second;
@@ -93,27 +52,44 @@ void movePiece(vector<vector<int>>& arr, int moveIdx)
 					arr[row][col] = 0;
 					row += dir[moveIdx].first;
 					col += dir[moveIdx].second;
+					isMove = true;
 					continue;
 				}
 
+				int idx = nxtI * arrSize + nxtJ;
+
 				//이동했는데 이번 이동에서 병합된적 없고 같은 값의 블록이라면 합치기
-				if (arr[nxtI][nxtJ] == arr[row][col] && isMerged[nxtI][nxtJ] == false)
+				if (arr[nxtI][nxtJ] == arr[row][col] && isMerged[idx] == false)
 				{
 					arr[nxtI][nxtJ] *= 2;
 					arr[row][col] = 0;
-					isMerged[nxtI][nxtJ] = true;
 
-					//최대값계산
-					maxBlock = max(maxBlock, arr[nxtI][nxtJ]);
+					isMerged[idx] = true;
+					isMove = true;	
 				}
-
 				//여기까지 왔다면 병합이 끝나거나 서로 같지 않은 블록이므로 분기 해제
+				curMaxBlock = max(curMaxBlock, arr[nxtI][nxtJ]);
 				break;
 			}
 		}
 	}
-	//cout << "\n\n[" << moveStr[moveIdx] << "] 이동\n";
-	//print(arr);
+
+	//모든 블록이 이동함, 가지치기 조건
+
+	//1. 이전 이동과 똑같은 모양이라면 리턴
+	if (isMove == false)
+		return true;
+
+	//끝까지 돌았을때 최대 기댓값
+	int expectValue = curMaxBlock * 1 << (MAX_MOVE - cnt + 1);
+
+	//2. 기댓값이 최댓값보다 작다면 리턴
+	if (expectValue < maxBlock)
+		return true;
+
+	maxBlock = max(maxBlock, curMaxBlock);
+
+	return false;
 }
 
 void dupleperm(int idx)
@@ -121,35 +97,43 @@ void dupleperm(int idx)
 	//분기문
 	if (idx == MAX_MOVE)
 	{
-		vector<vector<int>> copyArr = arr; //깊은 복사
-		for (auto& i : input)
-			movePiece(copyArr, i);
-		
+		//배열 복사
+		int arr[MAX_SIZE][MAX_SIZE];
+		for (int i = 0; i < arrSize; i++)
+			for (int j = 0; j < arrSize; j++)
+				arr[i][j] = g_arr[i][j];
+
+		for (int i = 0; i < MAX_MOVE; i++)
+			if (movePiece(arr, input[i], i + 1))
+				break;
+
 		return;
 	}
 
 	for (int i = 0; i < 4; i++)
 	{
-		input.push_back(i);
+		input[idx] = i;
 		dupleperm(idx + 1);
-		input.pop_back();
+		//input[idx] = -1;
 	}
 }
 
 int main()
-{	
+{
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+
 	cin >> arrSize;
-	arr.resize(arrSize, vector<int>(arrSize));
 
 	for (int i = 0; i < arrSize; i++)
 	{
 		for (int j = 0; j < arrSize; j++)
 		{
-			cin >> arr[i][j];
-			maxBlock = max(maxBlock, arr[i][j]);
-		}			
+			cin >> g_arr[i][j];
+			maxBlock = max(maxBlock, g_arr[i][j]);
+		}
 	}
-		
+
 	dupleperm(0);
 
 	cout << maxBlock;
