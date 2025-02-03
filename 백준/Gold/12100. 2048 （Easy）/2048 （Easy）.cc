@@ -1,20 +1,15 @@
 #include <iostream>
-#include <utility>
-#include <math.h>
 
 #define MAX_MOVE 5
 #define MAX_SIZE 20
+
 using namespace std;
 
-const pair<int, int> dir[4] = { {-1, 0}, {1, 0}, {0, -1},{0, 1} };
-
-//중복순열용
+const int dir[4][2] = {{-1, 0}, {1, 0}, {0, -1},{0, 1}};
 int input[MAX_MOVE];
-
-int g_arr[MAX_SIZE][MAX_SIZE]; //보드 벡터
+int g_arr[MAX_SIZE][MAX_SIZE];
 int arrSize = 0;
 
-int curMaxBlock = 0;
 int maxBlock = 0; //정답
 
 bool movePiece(int arr[][MAX_SIZE], int moveIdx, int cnt)
@@ -22,6 +17,7 @@ bool movePiece(int arr[][MAX_SIZE], int moveIdx, int cnt)
 	int row = 0, col = 0;
 	bool isMove = false;
 	bool isMerged[MAX_SIZE * MAX_SIZE] = { false };
+	int curMaxBlock = 0;
 
 	for (int i = 0; i < arrSize; i++)
 	{
@@ -38,8 +34,8 @@ bool movePiece(int arr[][MAX_SIZE], int moveIdx, int cnt)
 			//퍼즐 당기기
 			while (true)
 			{
-				int nxtI = row + dir[moveIdx].first;
-				int nxtJ = col + dir[moveIdx].second;
+				int nxtI = row + dir[moveIdx][0];
+				int nxtJ = col + dir[moveIdx][1];
 
 				//OOB 방지
 				if (nxtI < 0 || nxtI >= arrSize || nxtJ < 0 || nxtJ >= arrSize)
@@ -50,8 +46,8 @@ bool movePiece(int arr[][MAX_SIZE], int moveIdx, int cnt)
 				{
 					arr[nxtI][nxtJ] = arr[row][col];
 					arr[row][col] = 0;
-					row += dir[moveIdx].first;
-					col += dir[moveIdx].second;
+					row += dir[moveIdx][0];
+					col += dir[moveIdx][1];
 					isMove = true;
 					continue;
 				}
@@ -87,14 +83,14 @@ bool movePiece(int arr[][MAX_SIZE], int moveIdx, int cnt)
 	if (expectValue < maxBlock)
 		return true;
 
-	maxBlock = max(maxBlock, curMaxBlock);
+	if (curMaxBlock > maxBlock)
+		maxBlock = curMaxBlock;
 
 	return false;
 }
 
 void dupleperm(int idx)
 {
-	//분기문
 	if (idx == MAX_MOVE)
 	{
 		//배열 복사
@@ -106,7 +102,7 @@ void dupleperm(int idx)
 		for (int i = 0; i < MAX_MOVE; i++)
 			if (movePiece(arr, input[i], i + 1))
 				break;
-
+			
 		return;
 	}
 
@@ -114,7 +110,6 @@ void dupleperm(int idx)
 	{
 		input[idx] = i;
 		dupleperm(idx + 1);
-		//input[idx] = -1;
 	}
 }
 
@@ -130,7 +125,9 @@ int main()
 		for (int j = 0; j < arrSize; j++)
 		{
 			cin >> g_arr[i][j];
-			maxBlock = max(maxBlock, g_arr[i][j]);
+
+			if (maxBlock < g_arr[i][j])
+				maxBlock = g_arr[i][j];
 		}
 	}
 
