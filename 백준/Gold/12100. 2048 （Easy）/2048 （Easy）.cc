@@ -1,21 +1,29 @@
 #include <iostream>
+#include <cstring>
 
 #define MAX_MOVE 5
 #define MAX_SIZE 20
 
 using namespace std;
 
-const int dir[4][2] = {{-1, 0}, {1, 0}, {0, -1},{0, 1}};
+const int dir[4][2] = { {-1, 0}, {1, 0}, {0, -1},{0, 1} };
 int input[MAX_MOVE];
 int g_arr[MAX_SIZE][MAX_SIZE];
 int arrSize = 0;
 
 int maxBlock = 0; //정답
 
-bool movePiece(int arr[][MAX_SIZE], int moveIdx, int cnt)
+void copyBoard(int dest[][MAX_SIZE], int src[][MAX_SIZE]) {
+	memcpy(dest, src, sizeof(int) * MAX_SIZE * MAX_SIZE);
+}
+
+bool isSameBoard(int dest[][MAX_SIZE], int src[][MAX_SIZE]) {
+	return memcmp(dest, src, sizeof(int) * MAX_SIZE * MAX_SIZE) == 0;
+}
+
+int movePiece(int arr[][MAX_SIZE], int moveIdx)
 {
 	int row = 0, col = 0;
-	bool isMove = false;
 	bool isMerged[MAX_SIZE * MAX_SIZE] = { false };
 	int curMaxBlock = 0;
 
@@ -48,7 +56,6 @@ bool movePiece(int arr[][MAX_SIZE], int moveIdx, int cnt)
 					arr[row][col] = 0;
 					row += dir[moveIdx][0];
 					col += dir[moveIdx][1];
-					isMove = true;
 					continue;
 				}
 
@@ -61,55 +68,42 @@ bool movePiece(int arr[][MAX_SIZE], int moveIdx, int cnt)
 					arr[row][col] = 0;
 
 					isMerged[idx] = true;
-					isMove = true;	
 				}
 				//여기까지 왔다면 병합이 끝나거나 서로 같지 않은 블록이므로 분기 해제
-				curMaxBlock = max(curMaxBlock, arr[nxtI][nxtJ]);
+				
+				if(curMaxBlock < arr[nxtI][nxtJ])
+					curMaxBlock = arr[nxtI][nxtJ];
+				
 				break;
 			}
 		}
 	}
 
-	//모든 블록이 이동함, 가지치기 조건
-
-	//1. 이전 이동과 똑같은 모양이라면 리턴
-	if (isMove == false)
-		return true;
-
-	//끝까지 돌았을때 최대 기댓값
-	int expectValue = curMaxBlock * 1 << (MAX_MOVE - cnt + 1);
-
-	//2. 기댓값이 최댓값보다 작다면 리턴
-	if (expectValue < maxBlock)
-		return true;
-
-	if (curMaxBlock > maxBlock)
-		maxBlock = curMaxBlock;
-
-	return false;
+	return curMaxBlock;
 }
 
-void dupleperm(int idx)
+void dfs(int depth, int arr[][MAX_SIZE], int curMaxBlock)
 {
-	if (idx == MAX_MOVE)
+	if (depth == MAX_MOVE)
 	{
-		//배열 복사
-		int arr[MAX_SIZE][MAX_SIZE];
-		for (int i = 0; i < arrSize; i++)
-			for (int j = 0; j < arrSize; j++)
-				arr[i][j] = g_arr[i][j];
-
-		for (int i = 0; i < MAX_MOVE; i++)
-			if (movePiece(arr, input[i], i + 1))
-				break;
-			
 		return;
 	}
 
 	for (int i = 0; i < 4; i++)
 	{
-		input[idx] = i;
-		dupleperm(idx + 1);
+		int copyArr[MAX_SIZE][MAX_SIZE];
+		int nextMaxBlock;
+
+		copyBoard(copyArr, arr);
+		nextMaxBlock = movePiece(copyArr, i);
+		if (nextMaxBlock > maxBlock)
+			maxBlock = nextMaxBlock;
+
+		if (isSameBoard(copyArr, arr))
+			continue;
+
+		if (maxBlock < nextMaxBlock * 1 << (MAX_MOVE - depth + 1))
+			dfs(depth + 1, copyArr, nextMaxBlock);
 	}
 }
 
@@ -131,7 +125,7 @@ int main()
 		}
 	}
 
-	dupleperm(0);
+	dfs(0, g_arr, maxBlock);
 
 	cout << maxBlock;
 }
