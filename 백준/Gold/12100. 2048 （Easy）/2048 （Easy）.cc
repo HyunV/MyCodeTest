@@ -15,24 +15,8 @@ void copyArr(int src[][MAX_SIZE], int dest[][MAX_SIZE])
 	memcpy(dest, src, sizeof(int) * MAX_SIZE * MAX_SIZE);
 }
 
-bool compArr(int src[][MAX_SIZE], int dest[][MAX_SIZE])
-{
-	//0이면 같다는 뜻
+bool isSameBoard(int src[][MAX_SIZE], int dest[][MAX_SIZE]) {
 	return memcmp(src, dest, sizeof(int) * MAX_SIZE * MAX_SIZE) == 0;
-}
-
-void print(int arr[][MAX_SIZE])
-{
-	cout << '\n';
-	for (int i = 0; i < arrSize; i++)
-	{
-		for (int j = 0; j < arrSize; j++)
-		{
-			cout << arr[i][j]<< " ";
-		}
-		cout << '\n';
-	}
-	cout << '\n';
 }
 
 //반시계방향으로 90도 회전
@@ -48,9 +32,12 @@ void rotate(int arr[][MAX_SIZE])
 
 //반시계 회전으로 상,우,하,좌 순으로 배열이 돌아감
 //즉 회전한 배열 기준 숫자를 왼쪽으로 당김
-int pullPiece(int arr[][MAX_SIZE])
+bool pullPiece(int arr[][MAX_SIZE], int& curBlockSize)
 {
-	int blockSize = 0;
+	int copiedArr[MAX_SIZE][MAX_SIZE];
+	copyArr(arr, copiedArr);
+
+	bool isMoved = true;
 	for (int i = 0; i < arrSize; i++)
 	{
 		int widthArr[MAX_SIZE] = {}; //조각이 이동한 상황을 저장하는 배열
@@ -75,11 +62,11 @@ int pullPiece(int arr[][MAX_SIZE])
 		for (int j = 0; j < arrSize; j++)
 		{
 			arr[i][j] = widthArr[j];
-			blockSize = max(blockSize, arr[i][j]);
+			curBlockSize = max(curBlockSize, arr[i][j]);
 		}
 	}
 
-	return blockSize;
+	return isSameBoard(arr, copiedArr);
 }
 
 void dfs(int arr[][MAX_SIZE], int depth, int curMaxBlock)
@@ -96,19 +83,17 @@ void dfs(int arr[][MAX_SIZE], int depth, int curMaxBlock)
 		for (int j = 0; j < i; j++)
 			rotate(tempArr); //왼쪽으로 90도 회전시키기
 
-		int curBlockSize = pullPiece(tempArr);//왼쪽으로 당기기
-		maxBlock = max(curBlockSize, maxBlock);
-		
-		//회전한배열이 이전과 같으면 continue;
-		if (compArr(arr, tempArr))
+		int curBlockSize = 0;
+		if (pullPiece(tempArr, curBlockSize))//왼쪽으로 당기기
 			continue;
+		
+		maxBlock = max(curBlockSize, maxBlock);
 
 		//예상 최대값이 작으면 리턴
 		int expectValue = curBlockSize * 1 << (MAX_MOVE - depth + 1);
 		if (expectValue <= maxBlock)
 			continue;
 
-		//print(tempArr);
 		dfs(tempArr, depth + 1, curBlockSize);
 	}
 }
