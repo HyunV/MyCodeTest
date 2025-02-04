@@ -1,116 +1,123 @@
 #include <iostream>
 #include <cstring>
+#include <math.h>
 
 #define MAX_MOVE 5
 #define MAX_SIZE 20
 
 using namespace std;
 
-const int dir[4][2] = { {-1, 0}, {1, 0}, {0, -1},{0, 1} };
-int input[MAX_MOVE];
-int g_arr[MAX_SIZE][MAX_SIZE];
-int arrSize = 0;
+int arrSize;
+int maxBlock;
 
-int maxBlock = 0; //정답
-
-void copyBoard(int dest[][MAX_SIZE], int src[][MAX_SIZE]) {
+void copyArr(int src[][MAX_SIZE], int dest[][MAX_SIZE])
+{
 	memcpy(dest, src, sizeof(int) * MAX_SIZE * MAX_SIZE);
 }
 
-bool isSameBoard(int dest[][MAX_SIZE], int src[][MAX_SIZE]) {
-	return memcmp(dest, src, sizeof(int) * MAX_SIZE * MAX_SIZE) == 0;
+bool compArr(int src[][MAX_SIZE], int dest[][MAX_SIZE])
+{
+	//0이면 같다는 뜻
+	return memcmp(src, dest, sizeof(int) * MAX_SIZE * MAX_SIZE) == 0;
 }
 
-int movePiece(int arr[][MAX_SIZE], int moveIdx)
+void print(int arr[][MAX_SIZE])
 {
-	int row = 0, col = 0;
-	bool isMerged[MAX_SIZE * MAX_SIZE] = { false };
-	int curMaxBlock = 0;
-
+	cout << '\n';
 	for (int i = 0; i < arrSize; i++)
 	{
 		for (int j = 0; j < arrSize; j++)
 		{
-			switch (moveIdx)
-			{
-			case 0: row = i; col = j; break;
-			case 1: row = arrSize - 1 - i;  col = j; break;
-			case 2: row = j; col = i; break;
-			case 3: row = j; col = arrSize - 1 - i; break;
-			}
+			cout << arr[i][j]<< " ";
+		}
+		cout << '\n';
+	}
+	cout << '\n';
+}
 
-			//퍼즐 당기기
-			while (true)
-			{
-				int nxtI = row + dir[moveIdx][0];
-				int nxtJ = col + dir[moveIdx][1];
+//반시계방향으로 90도 회전
+void rotate(int arr[][MAX_SIZE])
+{
+	int tempArr[MAX_SIZE][MAX_SIZE];
+	copyArr(arr, tempArr);
 
-				//OOB 방지
-				if (nxtI < 0 || nxtI >= arrSize || nxtJ < 0 || nxtJ >= arrSize)
-					break;
+	for (int i = 0; i < arrSize; i++)
+		for (int j = 0; j < arrSize; j++)
+			arr[arrSize - j - 1][i] = tempArr[i][j];
+}
 
-				//옆이 빈 블록일 시 이동
-				if (arr[nxtI][nxtJ] == 0)
-				{
-					arr[nxtI][nxtJ] = arr[row][col];
-					arr[row][col] = 0;
-					row += dir[moveIdx][0];
-					col += dir[moveIdx][1];
-					continue;
-				}
+//반시계 회전으로 상,우,하,좌 순으로 배열이 돌아감
+//즉 회전한 배열 기준 숫자를 왼쪽으로 당김
+int pullPiece(int arr[][MAX_SIZE])
+{
+	int blockSize = 0;
+	for (int i = 0; i < arrSize; i++)
+	{
+		int widthArr[MAX_SIZE] = {}; //조각이 이동한 상황을 저장하는 배열
+		int idx = 0;
+		for (int j = 0; j < arrSize; j++)
+		{
+			if (arr[i][j] == 0)
+				continue;
+			
+			//1. 너비 배열에 값이 없다면 최근에 들어온 값을 넣어준다.
+			//2. 너비 배열의 idx내의 value가 새로 옮기는 arr[i][j]의 숫자와 일치하면 *2를 해주고 인덱스를 증가
+			//3. 너비 배열의 idx내의 value가 새로 옮기는 arr[i][j]의 숫자가 다르다면 인덱스를 올리고 삽입시킨다.
+			if (widthArr[idx] == 0) 
+				widthArr[idx] = arr[i][j];
+			else if (widthArr[idx] == arr[i][j])
+				widthArr[idx++] *= 2;	
+			else if (widthArr[idx] != arr[i][j])
+				widthArr[++idx] = arr[i][j];
+		}
 
-				int idx = nxtI * arrSize + nxtJ;
-
-				//이동했는데 이번 이동에서 병합된적 없고 같은 값의 블록이라면 합치기
-				if (arr[nxtI][nxtJ] == arr[row][col] && isMerged[idx] == false)
-				{
-					arr[nxtI][nxtJ] *= 2;
-					arr[row][col] = 0;
-
-					isMerged[idx] = true;
-				}
-				//여기까지 왔다면 병합이 끝나거나 서로 같지 않은 블록이므로 분기 해제
-				
-				if(curMaxBlock < arr[nxtI][nxtJ])
-					curMaxBlock = arr[nxtI][nxtJ];
-				
-				break;
-			}
+		//이동한 배열 덮어씌우기
+		for (int j = 0; j < arrSize; j++)
+		{
+			arr[i][j] = widthArr[j];
+			blockSize = max(blockSize, arr[i][j]);
 		}
 	}
 
-	return curMaxBlock;
+	return blockSize;
 }
 
-void dfs(int depth, int arr[][MAX_SIZE], int curMaxBlock)
+void dfs(int arr[][MAX_SIZE], int depth, int curMaxBlock)
 {
 	if (depth == MAX_MOVE)
-	{
 		return;
-	}
 
 	for (int i = 0; i < 4; i++)
 	{
-		int copyArr[MAX_SIZE][MAX_SIZE];
-		int nextMaxBlock;
+		//배열 복사
+		int tempArr[MAX_SIZE][MAX_SIZE];
+		copyArr(arr, tempArr);
 
-		copyBoard(copyArr, arr);
-		nextMaxBlock = movePiece(copyArr, i);
-		if (nextMaxBlock > maxBlock)
-			maxBlock = nextMaxBlock;
+		for (int j = 0; j < i; j++)
+			rotate(tempArr); //왼쪽으로 90도 회전시키기
 
-		if (isSameBoard(copyArr, arr))
+		int curBlockSize = pullPiece(tempArr);//왼쪽으로 당기기
+		maxBlock = max(curBlockSize, maxBlock);
+		
+		//회전한배열이 이전과 같으면 continue;
+		if (compArr(arr, tempArr))
 			continue;
 
-		if (maxBlock < nextMaxBlock * 1 << (MAX_MOVE - depth + 1))
-			dfs(depth + 1, copyArr, nextMaxBlock);
+		//예상 최대값이 작으면 리턴
+		int expectValue = curBlockSize * 1 << (MAX_MOVE - depth + 1);
+		if (expectValue <= maxBlock)
+			continue;
+
+		//print(tempArr);
+		dfs(tempArr, depth + 1, curBlockSize);
 	}
 }
 
 int main()
 {
 	ios::sync_with_stdio(0);
-	cin.tie(0);
+
+	int arr[MAX_SIZE][MAX_SIZE];
 
 	cin >> arrSize;
 
@@ -118,14 +125,11 @@ int main()
 	{
 		for (int j = 0; j < arrSize; j++)
 		{
-			cin >> g_arr[i][j];
-
-			if (maxBlock < g_arr[i][j])
-				maxBlock = g_arr[i][j];
+			cin >> arr[i][j];
+			maxBlock = max(maxBlock, arr[i][j]);
 		}
 	}
 
-	dfs(0, g_arr, maxBlock);
-
+	dfs(arr, 0, maxBlock);
 	cout << maxBlock;
 }
