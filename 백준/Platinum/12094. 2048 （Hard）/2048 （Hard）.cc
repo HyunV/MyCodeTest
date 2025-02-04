@@ -22,18 +22,12 @@ bool isSameBoard(int src[][MAX_SIZE], int dest[][MAX_SIZE]) {
 //반시계방향으로 90도 회전
 void rotate(int arr[][MAX_SIZE])
 {
-	for (int i = 0; i < arrSize; i++) {
-		for (int j = i + 1; j < arrSize; j++) {
-			swap(arr[i][j], arr[j][i]);
-		}
-	}
+	int tempArr[MAX_SIZE][MAX_SIZE];
+	copyArr(arr, tempArr);
 
-	// 2. 각 열을 반대로 뒤집기
-	for (int j = 0; j < arrSize; j++) { // 열(column) 기준
-		for (int i = 0; i < arrSize / 2; i++) {
-			swap(arr[i][j], arr[arrSize - 1 - i][j]);
-		}
-	}
+	for (int i = 0; i < arrSize; i++)
+		for (int j = 0; j < arrSize; j++)
+			arr[arrSize - j - 1][i] = tempArr[i][j];
 }
 
 //반시계 회전으로 상,우,하,좌 순으로 배열이 돌아감
