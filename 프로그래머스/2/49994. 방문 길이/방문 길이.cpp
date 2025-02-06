@@ -2,11 +2,12 @@
 #include <unordered_map>
 #include <unordered_set>
 #define ARR_SIZE 11
+#define DIGIT_SPACE 1000
 using namespace std;
 
 int solution(string dirs) {
     
-    pair<int, int> start = {5, 5};
+    pair<int, int> start = {ARR_SIZE/2, ARR_SIZE/2};
     unordered_map<char, pair<int, int>> oper = 
     {{'U', {-1, 0}}, {'D', {1, 0}},
      {'R', {0, 1}}, {'L', {0, -1}}};
@@ -24,8 +25,8 @@ int solution(string dirs) {
         
         int from = start.first * ARR_SIZE + start.second;
         int to = nxtX * ARR_SIZE + nxtY;
-        uSet.insert({from*1000+to});
-        uSet.insert({to*1000+from});
+        uSet.insert({from*DIGIT_SPACE+to});
+        uSet.insert({to*DIGIT_SPACE+from});
         start = {nxtX, nxtY};
     }
     
