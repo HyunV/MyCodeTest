@@ -9,6 +9,6 @@ int main()
 	double n;
 	cin >> n;
 	cout << fixed;
-	cout.precision(10);
+	cout.precision(9);
 	cout << sqrt(n / PI) * 2 * PI;
 }
