@@ -23,7 +23,7 @@ int main()
 	if (cnt != 0)
 	{
 		for (int i = 0; i < cnt; ++i)
-			if (vec[i] > vec[0])
+			if (vec[i] > answer)
 				answer = vec[i];
 
 		cout << answer;
