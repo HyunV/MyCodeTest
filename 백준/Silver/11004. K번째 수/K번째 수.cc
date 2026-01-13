@@ -16,7 +16,6 @@ int main() {
 	while (n--)
 		cin >> vec[n];
 
-	sort(vec.begin(), vec.end());
-
+	nth_element(vec.begin(), vec.begin() + k-1, vec.end());
 	cout << vec[k - 1];
 }
